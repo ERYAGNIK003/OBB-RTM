@@ -44,60 +44,12 @@ def xyxy2xy_top_wh(xyxy):
         print("Error in BBox")
     return x1,y1,w,h
 
-def nms_from_result(result0):
-    #print(result0)
-    boxes = result0.boxes.xyxy   # tensor of shape (N,4) in x1,y1,x2,y2
-    scores = result0.boxes.conf   # tensor of shape (N,) confidence scores
-    class_ids = result0.boxes.cls    # tensor of shape (N,) class indices
-
-    # Class-agnostic NMS
-    iou_threshold = 0.5
-    keep = nms(boxes, scores, iou_threshold)
-
-    # Filtered results
-    filtered_boxes = boxes[keep]
-    filtered_scores = scores[keep]
-    filtered_class_ids = class_ids[keep]
-
-    dets = torch.cat([
-    filtered_boxes,
-    filtered_scores.unsqueeze(1),
-    filtered_class_ids.unsqueeze(1)], dim=1)
-
-    # Convert to NumPy for tracker
-    dets_np = dets.cpu().numpy()
-    return dets_np
-
-   
-
-trk_type="botsort" 
 avgTime_inf=0
 avgTime_trk=0
 avgDets=0
 FPS=0
 img_sz=(1280, 720)
 
-
-
-def getLogo(main_image):
-    logo = cv2.imread('AU.png', cv2.IMREAD_UNCHANGED)  # Load the image with alpha channel
-    # Determine the position to place the logo at the right corner
-    # Extract the alpha channel from the logo
-    alpha_channel = logo[:, :, 3]
-    # Convert the logo to BGR (3 channels) for blending
-    logo_bgr = logo[:, :, :3]
-    # Determine the position to place the logo at the right corner
-    logo_height, logo_width = logo_bgr.shape[:2]
-    position_y = main_image.shape[0] - logo_height - 10  # 10 pixels margin from bottom
-    position_x = main_image.shape[1] - logo_width - 10   # 10 pixels margin from right
-
-    # Overlay the logo onto the main image using the alpha channel for transparency
-    for c in range(3):
-        main_image[position_y:position_y+logo_height, position_x:position_x+logo_width, c] = (
-            alpha_channel / 255.0 * logo_bgr[:, :, c] +
-            (1.0 - alpha_channel / 255.0) * main_image[position_y:position_y+logo_height, position_x:position_x+logo_width, c]
-        )
-    return main_image
 
 def do_Inference_On_Vid(input_path,output_dir,trackerName,annFlg):
     global YOLODIR,yoloes
@@ -219,13 +171,7 @@ def do_Inference_On_Vid(input_path,output_dir,trackerName,annFlg):
                 
                 t_trk=t
                 avgTime_trk += (t - avgTime_trk) / frm
-                
-                '''
-                xyxys = ts[:,0:4].astype('int') # float64 to int
-                ids = ts[:, 4].astype('int') # float64 to int 
-                confs = ts[:, 5]
-                clss = ts[:, 6]
-                '''
+
                 #OBB  columns (9): cx, cy, w, h, angle, id, conf, cls, det_ind
                 for track in ts:
                     # -----------------------------
@@ -321,9 +267,7 @@ def do_Inference_On_Vid(input_path,output_dir,trackerName,annFlg):
                 cv2.putText(frame, "Track: "+str(round(t_trk*1000,2)), (2000,100), cv2.FONT_HERSHEY_SIMPLEX, 3, (255,255,255), 5)
                 cv2.putText(frame, "FPS: "+str(FPS), (3000,100), cv2.FONT_HERSHEY_SIMPLEX, 3, (255,255,255), 5)
 
-                ann_frm=getLogo(frame)
-                resized = cv2.resize(ann_frm, img_sz, interpolation=cv2.INTER_AREA)
-                #cv2.imwrite(os.path.join(out_img_dir,str(frm)+".jpg"),resized)
+                resized = cv2.resize(frame, img_sz, interpolation=cv2.INTER_AREA)
                 out_vid.write(resized)
                 if frm1000_flg:
                     cv2.imwrite(os.path.join(model_out,str(frm)+".jpg"),frmCopy)
