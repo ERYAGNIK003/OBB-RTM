@@ -1,7 +1,8 @@
 # OBB-RTM
-Computer vision pipeline for vehicle tracking in OBB for road traffic monitoring
-
+Computer Vision Pipeline for OBB-Based Vehicle Detection and Tracking in Road Traffic Monitoring (RTM).
 ## Script
+This script currently supports botsort and occluboost.
+
 ```
 python OBB_tracking.py --input video.MP4 --tracker botsort
 ```
